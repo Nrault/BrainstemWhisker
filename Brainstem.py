@@ -29,7 +29,7 @@ def get_direction(force):
     force = unit_vec(force)
     if np.isnan(force[0]):
         return 0
-    return np.rad2deg(np.arccos(np.dot(force, np.array([1, 0, 0]))))
+    return np.rad2deg(np.arccos(np.dot(force, np.array([0, 0, 1]))))
 
 def force_to_time_array(force_array):
     direction = np.zeros(shape(force_array)[0])
@@ -236,6 +236,11 @@ nb_input_neuron = 1000
 #fav_direction = define_favorite_angles(45, 135, 225, 315, 1000)
 fav_direction = define_favorite_angles_gauss(90, 225, 45, 1000)
 #fav_direction = define_favorite_angles_uniform(1000)
+
+'''
+Magic numbers obtained through fitting each population adaptation rate to
+data from Sonekatsu and Gu 2020 (not that magic eh ?)
+'''
 spikes, _ = model(20.23676859919913 * nS, 69.64621029919265 * pA, 44.089198785866415 * ms,
                46.111299501668576 * nS, 3.213718541167184 * pA, 1882.0521336373106 * ms,
                59.10061355050058 * nS, 86.53424254697113 * pA, 1890.103325320332 * ms,
