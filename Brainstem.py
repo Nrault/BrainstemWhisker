@@ -251,7 +251,8 @@ def handle_client(client_socket):
     	if data:
 		json_data = json.loads(data.decode('utf-8'))
 		print("Received JSON data:", json_data)
-		direction, amplitude, amplitudeOnOff = force_to_time_array_per_timestep(json_data['bt_force_vector'])
+		direction, amplitude, amplitudeOnOff = force_to_time_array_per_timestep(json_data['RA1']['force_vector'])
+		
 		spikes, _ = model(20.23676859919913 * nS, 69.64621029919265 * pA, 44.089198785866415 * ms,
                 46.111299501668576 * nS, 3.213718541167184 * pA, 1882.0521336373106 * ms,
                 59.10061355050058 * nS, 86.53424254697113 * pA, 1890.103325320332 * ms,
