@@ -49,6 +49,20 @@ def force_to_time_array(force_array):
     
     return direction, amplitude, amplitudeOnOff
     
+def force_to_time_array_per_timestep(force_array):
+    direction = np.zeros((1, 1))
+    amplitude = np.zeros((1, 1))
+    amplitudeOnOff = np.zeros((1, 1))
+    for idx, force in enumerate(force_array):
+        direction[idx] = get_direction(force)
+        amplitude[idx] = np.linalg.norm(force) * 100
+        amplitudeOnOff[idx] = amplitude[idx] > 3
+    
+    direction = TimedArray(direction, dt = 1*ms)
+    amplitude = TimedArray(amplitude, dt = 1 * ms)
+    amplitudeOnOff = TimedArray(amplitudeOnOff, dt = 1 * ms)
+    
+    return direction, amplitude, amplitudeOnOff
 
 ''' create_ramp_and_hold
 '''
@@ -222,16 +236,30 @@ def model(a_SA1, b_SA1, tau_SRA1, a_SA2, b_SA2, tau_SRA2, a_RA, b_RA, tau_RA,
     run(duration * msecond)
     
     return spike_mon, trace
+    
+def produce_motor_input():
+	return True
 
 def handle_client(client_socket):
-    data = client_socket.recv(1024)
-    if data:
-        json_data = json.loads(data.decode('utf-8'))
-        print("Received JSON data:", json_data)
-        time.sleep(1)
-        response_data = {'message' : 'JSON data received'}
-        response_json = json.dumps(response_data)
-        client_socket.send(response_json.encode('utf-8'))
+    fav_direction = define_favorite_angles_gauss(90, 225, 45, 1000)
+    while True:
+	response_data = {'Start' : 'True'}
+	response_json = json.dumps(response_data)
+	client_socket.send(response_json.encode('utf-8'))
+    	
+    	data = client_socket.recv(1024)
+    	if data:
+		json_data = json.loads(data.decode('utf-8'))
+		print("Received JSON data:", json_data)
+		direction, amplitude, amplitudeOnOff = force_to_time_array_per_timestep(json_data['bt_force_vector'])
+		spikes, _ = model(20.23676859919913 * nS, 69.64621029919265 * pA, 44.089198785866415 * ms,
+                46.111299501668576 * nS, 3.213718541167184 * pA, 1882.0521336373106 * ms,
+                59.10061355050058 * nS, 86.53424254697113 * pA, 1890.103325320332 * ms,
+                direction, amplitude, amplitudeOnOff, 1000, fav_direction, 1)
+
+		plt.plot(range(duration), compute_spontaneous_activity(spikes.t, 1))
+		time.sleep(1)
+		
     
     client_socket.close()
     
@@ -244,10 +272,9 @@ def main():
     server_socket.bind((host, port))
     server_socket.listen(1)
     print("Server listening on", host, "port", port)
-    while True:
-        client_socket, client_address = server_socket.accept()
-        print("Connected by", client_address)
-        #handle_client(client_socket)
+    client_socket, client_address = server_socket.accept()
+    print("Connected by", client_address)
+    handle_client(client_socket)
         
     server_socket.close()
     
