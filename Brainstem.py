@@ -9,6 +9,9 @@ from brian2 import *
 import numpy as np
 import random as rng
 import pandas as pd
+import socket
+import json
+import time
 
 prefs.codegen.target = 'numpy'
 
@@ -219,8 +222,37 @@ def model(a_SA1, b_SA1, tau_SRA1, a_SA2, b_SA2, tau_SRA2, a_RA, b_RA, tau_RA,
     run(duration * msecond)
     
     return spike_mon, trace
+
+def handle_client(client_socket):
+    data = client_socket.recv(1024)
+    if data:
+        json_data = json.loads(data.decode('utf-8'))
+        print("Received JSON data:", json_data)
+        time.sleep(1)
+        response_data = {'message' : 'JSON data received'}
+        response_json = json.dumps(response_data)
+        client_socket.send(response_json.encode('utf-8'))
     
+    client_socket.close()
     
+
+def main():
+    host = '127.0.0.1'
+    port = 12346
+    
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.bind((host, port))
+    server_socket.listen(1)
+    print("Server listening on", host, "port", port)
+    while True:
+        client_socket, client_address = server_socket.accept()
+        print("Connected by", client_address)
+        #handle_client(client_socket)
+        
+    server_socket.close()
+    
+if __name__ == "__main__":
+    main()
 
 #direction, amplitude, amplitudeOnOff = create_ramp_and_hold(1123, 3677, 90, 0, 
 #                                                            90, 100, duration)
